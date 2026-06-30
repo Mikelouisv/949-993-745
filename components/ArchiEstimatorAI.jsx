@@ -6,15 +6,21 @@ import * as XLSX from "xlsx";
 const RATIOS = {
   logement: {
     label: "Logement / Maison individuelle",
+    // ⚠️ Ratios issus de la DPGF réelle Eiffage — 39 maisons M3 / Val-de-Reuil (Jan. 2026)
+    // Base : 168 064 € travaux/maison · ~85 m² · Zone PPRI (coeff surcoût intégré)
+    // Source : Marché Global de Performance 3F Normanvie / STUDIOS Architecture / AML
     neuf: {
-      "Bas de gamme":   { demolition:0, grosOeuvre:350, cloisons:90, menuiseries:100, electricite:100, plomberie:120, cvc:80, sols:65, peinture:35, mobilier:0, cuisine:60 },
-      "Moyen de gamme": { demolition:0, grosOeuvre:430, cloisons:120, menuiseries:140, electricite:130, plomberie:155, cvc:110, sols:90, peinture:50, mobilier:0, cuisine:90 },
-      "Haut de gamme":  { demolition:0, grosOeuvre:600, cloisons:170, menuiseries:210, electricite:185, plomberie:220, cvc:160, sols:140, peinture:75, mobilier:0, cuisine:140 },
+      // LLS/LLI logement social — base DPGF Eiffage M3 (charpente+couverture+façades inclus dans grosOeuvre)
+      "Bas de gamme":   { demolition:0, grosOeuvre:580, cloisons:140, menuiseries:140, electricite:75,  plomberie:90,  cvc:120, sols:70,  peinture:60,  mobilier:0, cuisine:0 },
+      // Moyen de gamme — DPGF Eiffage M3 Val-de-Reuil (valeurs réelles 2026, zone PPRI, poteaux-poutres, bac acier, bardage bois)
+      "Moyen de gamme": { demolition:0, grosOeuvre:685, cloisons:175, menuiseries:170, electricite:88,  plomberie:103, cvc:143, sols:82,  peinture:75,  mobilier:0, cuisine:0 },
+      // Haut de gamme — surcoût matériaux premium estimé +35% vs base Eiffage
+      "Haut de gamme":  { demolition:0, grosOeuvre:900, cloisons:230, menuiseries:240, electricite:130, plomberie:150, cvc:200, sols:130, peinture:110, mobilier:0, cuisine:0 },
     },
     renovation: {
-      "Bas de gamme":   { demolition:25, grosOeuvre:80, cloisons:80, menuiseries:90, electricite:90, plomberie:110, cvc:70, sols:55, peinture:30, mobilier:0, cuisine:50 },
-      "Moyen de gamme": { demolition:35, grosOeuvre:110, cloisons:110, menuiseries:130, electricite:120, plomberie:140, cvc:100, sols:80, peinture:45, mobilier:0, cuisine:80 },
-      "Haut de gamme":  { demolition:50, grosOeuvre:160, cloisons:160, menuiseries:200, electricite:175, plomberie:205, cvc:145, sols:130, peinture:70, mobilier:0, cuisine:130 },
+      "Bas de gamme":   { demolition:30, grosOeuvre:90,  cloisons:120, menuiseries:130, electricite:90,  plomberie:110, cvc:100, sols:65,  peinture:55,  mobilier:0, cuisine:0 },
+      "Moyen de gamme": { demolition:40, grosOeuvre:120, cloisons:160, menuiseries:170, electricite:110, plomberie:140, cvc:130, sols:85,  peinture:70,  mobilier:0, cuisine:0 },
+      "Haut de gamme":  { demolition:60, grosOeuvre:180, cloisons:220, menuiseries:240, electricite:160, plomberie:200, cvc:185, sols:130, peinture:100, mobilier:0, cuisine:0 },
     },
   },
   restaurant: {
@@ -80,6 +86,24 @@ const RATIOS = {
       "Bas de gamme":   { demolition:30, grosOeuvre:90, cloisons:100, menuiseries:80, electricite:160, plomberie:60, cvc:165, sols:60, peinture:35, mobilier:35, cuisine:0 },
       "Moyen de gamme": { demolition:40, grosOeuvre:120, cloisons:140, menuiseries:120, electricite:210, plomberie:85, cvc:215, sols:90, peinture:50, mobilier:60, cuisine:0 },
       "Haut de gamme":  { demolition:60, grosOeuvre:175, cloisons:200, menuiseries:180, electricite:295, plomberie:125, cvc:305, sols:140, peinture:75, mobilier:110, cuisine:0 },
+    },
+  },
+  // ── DONNÉES RÉELLES DPGF EIFFAGE ─────────────────────────────────────────
+  // Source : Marché Global de Performance 3F Normanvie — 39 maisons M3
+  // Val-de-Reuil (27100) — Zone PPRI — Janvier 2026
+  // Architectes : STUDIOS Architecture + Atelier Marie Leguillon
+  // Total exécution : 6 554 518 € HT / 39 maisons / ~85 m² moyen
+  logement_social: {
+    label: "Logement social / MGP (DPGF Eiffage 2026)",
+    neuf: {
+      "Bas de gamme":   { demolition:0, grosOeuvre:620, cloisons:150, menuiseries:145, electricite:80,  plomberie:92,  cvc:128, sols:74, peinture:68, mobilier:0, cuisine:0 },
+      "Moyen de gamme": { demolition:0, grosOeuvre:685, cloisons:175, menuiseries:170, electricite:88,  plomberie:103, cvc:143, sols:82, peinture:75, mobilier:0, cuisine:0 },
+      "Haut de gamme":  { demolition:0, grosOeuvre:790, cloisons:200, menuiseries:195, electricite:100, plomberie:120, cvc:165, sols:95, peinture:85, mobilier:0, cuisine:0 },
+    },
+    renovation: {
+      "Bas de gamme":   { demolition:35, grosOeuvre:100, cloisons:130, menuiseries:140, electricite:85,  plomberie:95,  cvc:110, sols:70, peinture:60, mobilier:0, cuisine:0 },
+      "Moyen de gamme": { demolition:45, grosOeuvre:130, cloisons:165, menuiseries:170, electricite:105, plomberie:118, cvc:138, sols:90, peinture:75, mobilier:0, cuisine:0 },
+      "Haut de gamme":  { demolition:60, grosOeuvre:180, cloisons:200, menuiseries:200, electricite:130, plomberie:150, cvc:170, sols:115,peinture:95, mobilier:0, cuisine:0 },
     },
   },
 };
